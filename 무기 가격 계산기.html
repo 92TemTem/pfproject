@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>팬텀포스 무기 가격 계산기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #555;
+        }
+		input, select, button {
+			width: 100%; 
+			padding: 10px;
+			margin-bottom: 10px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 16px;
+			box-sizing: border-box; 
+		}
+        button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .credit {
+            color: #d4af37; /* 진한 노란색 */
+            font-weight: bold;
+        }
+        .robux {
+            color: #28a745; /* 진한 초록색 */
+            font-weight: bold;
+        }
+        .owned {
+            color: #007bff; /* 진한 파란색 */
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>팬텀포스 무기 가격 계산기</h1>
+        <label for="current-rank">현재 랭크:</label>
+        <input type="number" id="current-rank" placeholder="현재 랭크를 입력하세요">
+
+        <label for="weapon-search">구매할 무기 검색:</label>
+        <input type="text" id="weapon-search" placeholder="무기 이름을 입력하세요" oninput="filterWeapons()">
+
+        <label for="weapon-select">구매할 무기:</label>
+        <select id="weapon-select">
+            <!-- 무기 목록 -->
+        </select>
+
+        <label for="current-credit">현재 잔여 크레딧:</label>
+        <input type="number" id="current-credit" placeholder="현재 잔여 크레딧을 입력하세요">
+
+        <button onclick="calculate()">계산하기</button>
+
+        <div id="result" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const weapons = [
+            { name: "AK12", rank: 0 },
+            { name: "MP5K", rank: 0 },
+            { name: "Colt LMG", rank: 0 },
+            { name: "Intervention", rank: 0 },
+            { name: "M4A1", rank: 0 },
+            { name: "M9", rank: 0 },
+            { name: "G17", rank: 0 },
+			{ name: "KSG12", rank: 1 },
+            { name: "M14", rank: 2 },
+            { name: "MK11", rank: 3 },
+            { name: "MP412 REX", rank: 4 },
+            { name: "UMP45", rank: 5 },
+            { name: "G36K", rank: 6 },
+            { name: "G36C", rank: 7 },
+            { name: "M1911A1", rank: 8 },
+            { name: "MP7", rank: 9 },
+            { name: "AN-94", rank: 10 },
+            { name: "Remington 870", rank: 11 },
+            { name: "Remington 700", rank: 12 },
+            { name: "SKS", rank: 13 },
+            { name: "M17", rank: 13 },
+            { name: "M4", rank: 14 },
+            { name: "AS VAL", rank: 15 },
+            { name: "SCAR-L", rank: 16 },
+            { name: "G18C", rank: 17 },
+            { name: "Desert Eagle L5", rank: 18 },
+            { name: "M60", rank: 19 },
+            { name: "AUG A1", rank: 20 },
+            { name: "Beowulf ECR", rank: 21 },
+            { name: "G21", rank: 21 },
+            { name: "M16A4", rank: 22 },
+            { name: "MAC10", rank: 23 },
+            { name: "G23", rank: 23 },
+            { name: "DBV12", rank: 24 },
+            { name: "P90", rank: 24 },
+            { name: "G36", rank: 25 },
+            { name: "93R", rank: 26 },
+            { name: "AUG HBAR", rank: 27 },
+            { name: "L22", rank: 28 },
+            { name: "M16A1", rank: 28 },
+            { name: "Mateba 6", rank: 29 },
+            { name: "SCAR-H", rank: 30 },
+            { name: "M16A3", rank: 31 },
+            { name: "SCAR PDW", rank: 32 },
+            { name: "MG36", rank: 33 },
+            { name: "M45A1", rank: 34 },
+            { name: "AKU12", rank: 35 },
+            { name: "Colt MARS", rank: 36 },
+            { name: "Serbu Shotgun", rank: 36 },
+            { name: "Type 20", rank: 37 },
+            { name: "RPK12", rank: 37 },
+            { name: "Dragunov SVU", rank: 38 },
+            { name: "SL-8", rank: 38 },
+            { name: "AUG A2", rank: 39 },
+            { name: "MP5", rank: 40 },
+            { name: "G40", rank: 40 },
+            { name: "AWS", rank: 41 },
+            { name: "K2", rank: 42 },
+            { name: "Groza-1", rank: 42 },
+            { name: "PP-2000", rank: 42 },
+            { name: "L86 LSW", rank: 43 },
+            { name: "AK12BR", rank: 44 },
+            { name: "FAMAS F1", rank: 45 },
+            { name: "VSS Vintorez", rank: 46 },
+            { name: "AK47", rank: 47 },
+            { name: "OTs-126", rank: 48 },
+            { name: "Colt SMG 633", rank: 49 },
+            { name: "G50", rank: 50 },
+            { name: "KG-99", rank: 50 },
+            { name: "TEC-9", rank: 50 },
+            { name: "AK12C", rank: 51 },
+            { name: "AUG A3", rank: 52 },
+            { name: "L2A3", rank: 53 },
+            { name: "RPK", rank: 54 },
+            { name: "L85A2", rank: 55 },
+            { name: "KS-23M", rank: 56 },
+            { name: "Five Seven", rank: 57 },
+            { name: "1858 New Army", rank: 58 },
+            { name: "MSG90", rank: 59 },
+            { name: "G3A3", rank: 59 },
+            { name: "MP5SD", rank: 60 },
+            { name: "ZIP 22", rank: 61 },
+            { name: "Honey Badger", rank: 62 },
+            { name: "K1A", rank: 63 },
+            { name: "Saiga-12", rank: 63 },
+            { name: "HK416", rank: 64 },
+            { name: "BFG 50", rank: 65 },
+            { name: "MP10", rank: 66 },
+            { name: "HK21", rank: 67 },
+            { name: "M21", rank: 68 },
+            { name: "Micro Uzi", rank: 68 },
+            { name: "SR-3M", rank: 69 },
+            { name: "Beowulf TCR", rank: 70 },
+            { name: "M3A1", rank: 71 },
+            { name: "HAMR IAR", rank: 72 },
+            { name: "GI M1", rank: 73 },
+            { name: "AK74", rank: 74 },
+            { name: "MP5/10", rank: 74 },
+            { name: "SFG 50", rank: 75 },
+            { name: "AG-3", rank: 76 },
+            { name: "Uzi", rank: 77 },
+            { name: "SA58 SPR", rank: 78 },
+            { name: "HK417", rank: 78 },
+            { name: "Groza-4", rank: 79 },
+            { name: "M79 Thumper", rank: 79 },
+            { name: "AUG A3 Para", rank: 80 },
+            { name: "Stevens DB", rank: 81 },
+            { name: "AWM", rank: 82 },
+            { name: "Redhawk 44", rank: 82 },
+            { name: "TRG-42", rank: 84 },
+            { name: "Hardballer", rank: 84 },
+            { name: "Škorpion vz. 61", rank: 84 },
+            { name: "SCAR SSR", rank: 85 },
+            { name: "MC51", rank: 86 },
+            { name: "E-Gun", rank: 87 },
+            { name: "Coilgun", rank: 87 },
+            { name: "RPK74", rank: 88 },
+            { name: "AKS74U", rank: 88 },
+            { name: "FAL 50.63 Para", rank: 89 },
+            { name: "Sawed Off", rank: 90 },
+            { name: "Mosin Nagant", rank: 91 },
+            { name: "Izhevsk PB", rank: 91 },
+            { name: "PPSh-41", rank: 92 },
+            { name: "Makarov PM", rank: 92 },
+            { name: "1858 Carbine", rank: 93 },
+            { name: "AKM", rank: 94 },
+            { name: "Saiga-12U", rank: 95 },
+            { name: "Henry 45-70", rank: 96 },
+            { name: "ASMI", rank: 97 },
+            { name: "FAL Para Shorty", rank: 98 },
+            { name: "GB-22", rank: 99 },
+            { name: "Kriss Vector", rank: 100 },
+            { name: "MG3KWS", rank: 101 },
+            { name: "Desert Eagle XIX", rank: 102 },
+            { name: "AK103", rank: 103 },
+            { name: "Dragunov SVDS", rank: 104 },
+            { name: "AK105", rank: 105 },
+            { name: "MP1911", rank: 106 },
+            { name: "FAL 50.00", rank: 107 },
+            { name: "MP40", rank: 107 },
+            { name: "AM III", rank: 109 },
+            { name: "Arm Pistol", rank: 110 },
+            { name: "TAR-21", rank: 111 },
+            { name: "AA-12", rank: 112 },
+            { name: "Judge", rank: 113 },
+            { name: "Jury", rank: 114 },
+            { name: "StG-44", rank: 116 },
+            { name: "Obrez", rank: 117 },
+            { name: "M1918A2", rank: 118 },
+            { name: "SPAS-12", rank: 120 },
+            { name: "Tommy Gun", rank: 121 },
+            { name: "Type 88", rank: 122 },
+            { name: "Gyrojet Mark I", rank: 122 },
+            { name: "M231", rank: 123 },
+            { name: "KAC SRR", rank: 125 },
+            { name: "RAMA 1130", rank: 126 },
+            { name: "Gyrojet Carbine", rank: 127 },
+            { name: "C7A2", rank: 128 },
+            { name: "C8A2", rank: 128 },
+            { name: "X95R", rank: 130 },
+            { name: "GSP", rank: 131 },
+            { name: "SASS 308", rank: 132 },
+            { name: "DT11 Pro", rank: 133 },
+            { name: "M1903", rank: 136 },
+            { name: "Executioner", rank: 137 },
+            { name: "K14", rank: 138 },
+            { name: "Grizzly", rank: 144 },
+            { name: "BWC-9", rank: 149 },
+            { name: "Hecate II", rank: 150 },
+            { name: "M2011", rank: 150 },
+            { name: "Five-0", rank: 155 },
+            { name: "FT300", rank: 160 },
+            { name: "HK51B", rank: 160 },
+            { name: "M107", rank: 170 },
+            { name: "MGV-176", rank: 176 },
+            { name: "Alien", rank: 179 },
+            { name: "HCAR", rank: 181 },
+            { name: "USAS-12", rank: 189 },
+            { name: "Steyr Scout", rank: 195 },
+            { name: "Stoner 96", rank: 196 },
+            { name: "WA2000", rank: 200 },
+            { name: "AF2011-A1", rank: 201 },
+            { name: "G11K2", rank: 211 },
+            { name: "NTW-20", rank: 220 },
+            { name: "Can Cannon", rank: 222 },
+            { name: "ChainSAW", rank: 226 },
+            { name: "MG42", rank: 242 }
+        ];
+
+        const robuxToCredit = [
+            { robux: 10, credit: 80 },
+            { robux: 20, credit: 160 },
+            { robux: 50, credit: 420 },
+            { robux: 150, credit: 1300 },
+            { robux: 350, credit: 3200 },
+            { robux: 500, credit: 4600 },
+            { robux: 1000, credit: 10000 },
+            { robux: 2500, credit: 27000 },
+            { robux: 5000, credit: 60000 }
+        ];
+
+        window.onload = function() {
+            populateWeapons();
+        };
+
+        function populateWeapons(filter = "") {
+            const weaponSelect = document.getElementById('weapon-select');
+            weaponSelect.innerHTML = ""; // 기존 옵션 제거
+            const filteredWeapons = weapons.filter(weapon => weapon.name.toLowerCase().startsWith(filter.toLowerCase()));
+            filteredWeapons.forEach(weapon => {
+                const option = document.createElement('option');
+                option.value = weapon.rank;
+                option.textContent = weapon.name;
+                weaponSelect.appendChild(option);
+            });
+        }
+
+        function filterWeapons() {
+            const filter = document.getElementById('weapon-search').value;
+            populateWeapons(filter);
+        }
+
+        function numberWithCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+		function calculate() {
+			const currentRank = parseInt(document.getElementById('current-rank').value);
+			const weaponRank = parseInt(document.getElementById('weapon-select').value);
+			const currentCredit = parseInt(document.getElementById('current-credit').value);
+
+			if (isNaN(currentRank) || isNaN(weaponRank) || isNaN(currentCredit)) {
+				alert("모든 항목을 올바르게 입력하세요.");
+				return;
+			}
+
+		const resultDiv = document.getElementById('result');
+			resultDiv.style.display = 'block';
+
+			if (currentRank >= weaponRank) {
+				resultDiv.innerHTML = `
+					<span class="owned">이미 해당 총기를 가지고 있습니다. 무기고를 확인하세요!</span>
+				`;
+				return;
+			}
+
+			const weaponCost = 140 * (weaponRank - currentRank) + 700;
+			const deficit = weaponCost - currentCredit;
+
+			if (deficit <= 0) {
+				resultDiv.innerHTML = `
+					<span class="credit">충분히 구입할 수 있습니다!</span>
+				`;
+			} else {
+				let robuxNeeded = 0;
+				let totalRobux = 0;
+				let totalCredits = 0;
+
+				for (let i = robuxToCredit.length - 1; i >= 0; i--) {
+					while (deficit - totalCredits >= robuxToCredit[i].credit) {
+						totalRobux += robuxToCredit[i].robux;
+						totalCredits += robuxToCredit[i].credit;
+					}
+				}
+
+				if (totalCredits < deficit) {
+					totalRobux += robuxToCredit.find(option => option.credit >= (deficit - totalCredits)).robux;
+				}
+
+				resultDiv.innerHTML = `
+					크레딧이 충분하지 않습니다.<br>
+					해당 무기를 구매하기 위해선 <span class="credit">${numberWithCommas(deficit)}</span> 크레딧이 추가적으로 필요합니다.<br>
+					<span class="robux">${numberWithCommas(totalRobux)}</span> 로벅스를 추가적으로 사용하시면, 해당하는 크레딧을 더 얻으실 수 있습니다.
+				`;
+			}
+		}
+    </script>
+</body>
+</html>
